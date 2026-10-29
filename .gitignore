@@ -1,0 +1,37 @@
+node_modules/
+*.log
+.DS_Store
+.env
+
+# Local backup files (timestamped by dev convention — never commit these)
+docs/*_2026-*.js
+docs/*_2026-*.html
+docs/*_2026-*.png
+docs/*_2026-*.webp
+_local_backups/
+_local/
+.wrangler/
+check-no-cloud.sh
+cloudflare-worker/.wrangler/
+_backups/
+.superpowers/
+
+# --- Material interno fuera del repo público (JFC 2026-09-08, anti-clonador/pirata) ---
+# Planes, prompts, diarios, mecánica de licencias, playbook: se quedan en disco y en
+# los snapshots, NO se publican. Se conservan README.md y PRIVACY.md (auditables).
+# .claude/ (snapshot, guards, compuerta) se DEJA dentro a propósito: la verificación
+# de cada sesión nueva lo necesita.
+/*.md
+!README.md
+!PRIVACY.md
+_private/
+backups/
+out-jueces/
+
+# --- Notas internas fuera del sitio publico (JFC 2026-10-07, auditoria B-1) ---
+# Movidas a C:\00 Projects\friendly-123-privado\docs-internos-2026-10-07\ (y Notion).
+# NO re-agregar: docs/ se sirve publicamente por Pages. Siguen en el historial de git.
+docs/NOTA-*.md
+docs/RUNBOOK-*.md
+docs/OUTREACH-*.md
+docs/superpowers/
