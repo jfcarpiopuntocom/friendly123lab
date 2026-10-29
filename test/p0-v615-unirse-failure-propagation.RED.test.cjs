@@ -6,7 +6,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const code=fs.readFileSync(path.join(__dirname,'../docs/sync-realtime.js'),'utf8');
 const from=code.indexOf('    unirse(codigo) {');
-const to=code.indexOf('    resincronizar()',from);
+const to=code.indexOf('    desactivar() {',from);
 assert.ok(from>=0&&to>from);
 const unirse=code.slice(from,to).replace(/,\s*$/, '');
 const A='F123-SYNTHETIC-A',B='F123-SYNTHETIC-B';
