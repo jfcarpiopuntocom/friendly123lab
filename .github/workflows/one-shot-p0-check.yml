@@ -1,0 +1,49 @@
+name: One-shot isolated v614 financial durability checks
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/one-shot-p0-check.yml"]
+permissions:
+  contents: write
+jobs:
+  isolated:
+    runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Checkout precise candidate and run only three cited failures
+        id: focused
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --quiet https://github.com/jfcarpiopuntocom/friendly-123.git /tmp/f123-target
+          git -C /tmp/f123-target checkout --quiet --detach 21f759979a10dd4f7e765db5ce7bbfee74e30c51
+          cd /tmp/f123-target
+          npm ci --silent
+          node --require ./test/helpers/sin-red-produccion.cjs --test --test-timeout=120000 test/hechos-import-recovery.test.cjs
+          node --require ./test/helpers/sin-red-produccion.cjs --test --test-timeout=120000 test/incident-v604-selective-apply-retry.test.cjs
+          node --require ./test/helpers/sin-red-produccion.cjs --test --test-timeout=120000 test/yjs-autorecovery-native.test.cjs
+      - name: Retire one-shot workflow (regardless of test outcome)
+        if: always()
+        shell: bash
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          rm -f .github/workflows/one-shot-p0-check.yml
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: retire one-shot isolated v614 test runner"
+          git push origin HEAD:main
+      - name: Gate targeted checks
+        if: always()
+        env:
+          OUTCOME: ${{ steps.focused.outcome }}
+        run: |
+          test "$OUTCOME" = success
