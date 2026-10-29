@@ -1,0 +1,51 @@
+name: v614 one-time focused conformance
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/one-shot-v614-conformance.yml"]
+permissions:
+  contents: write
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Execute three isolated tests and retain per-test verdicts
+        id: verify
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone -q https://github.com/jfcarpiopuntocom/friendly-123.git /tmp/f123
+          git -C /tmp/f123 checkout -q --detach bd8984e5ce589464feec86b6b7f2095c867bdce0
+          cd /tmp/f123
+          npm ci --silent
+          failed=0
+          for file in test/hechos-import-recovery.test.cjs test/incident-v604-selective-apply-retry.test.cjs test/yjs-autorecovery-native.test.cjs; do
+            echo "::group::FOCUSED $file"
+            node --require ./test/helpers/sin-red-produccion.cjs --test --test-timeout=120000 "$file" || failed=$((failed+1))
+            echo "::endgroup::"
+          done
+          echo "FOCUSED_FAILED=$failed"
+          test "$failed" -eq 0
+      - name: Remove workflow permanently
+        if: always()
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/one-shot-v614-conformance.yml
+          git add -A
+          git commit -m "chore: retire one-shot v614 conformance workflow"
+          git push origin HEAD:main
+      - name: Enforce exact-focused result
+        if: always()
+        env:
+          OUTCOME: ${{ steps.verify.outcome }}
+        run: test "$OUTCOME" = success
